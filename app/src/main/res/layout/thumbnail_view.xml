@@ -1,0 +1,14 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="@dimen/row_width"
+              android:layout_height="match_parent" >
+
+    <ImageView
+        android:id="@+id/thumbnail"
+        android:layout_width="@dimen/image_width"
+        android:layout_height="@dimen/image_width"
+        android:layout_margin="5dp"
+        android:scaleType="fitCenter"
+        android:text="@string/loading"/>
+
+</LinearLayout>
