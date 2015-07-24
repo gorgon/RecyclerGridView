@@ -25,7 +25,7 @@ public class UrlsLoader {
     private UrlsLoaderListener listener;
 
     public interface UrlsLoaderListener {
-        public void onLoaded(String[] urls);
+        public void onLoaded(ArrayList<String> urls);
     }
 
     public static void load(int pageNumber, UrlsLoaderListener listener) {
@@ -62,7 +62,7 @@ public class UrlsLoader {
                     Log.e(TAG, "Got exception trying to parse JSON: " + ex);
                 }
 
-                listener.onLoaded(arrayList.toArray(new String[arrayList.size()]));
+                listener.onLoaded(arrayList);
             }
 
             private JSONObject loadUrl(String url) {

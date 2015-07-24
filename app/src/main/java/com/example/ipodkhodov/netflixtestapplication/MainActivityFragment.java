@@ -16,6 +16,7 @@ import android.widget.ImageView;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -23,8 +24,13 @@ import java.util.HashMap;
  * Main fragment with grid recycler view
  */
 public class MainActivityFragment extends Fragment {
+    private final String TAG = "MainActivityFragment";
+
     private RecyclerView recyclerView;
     private View loadingView;
+    private MyAdapter adapter;
+
+    private int currentPage = 1;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -47,31 +53,44 @@ public class MainActivityFragment extends Fragment {
         recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), totalRows));
         initAdapter(null);
 
-        UrlsLoader.load(1, new UrlsLoader.UrlsLoaderListener() {
+        // Load the initial page
+        loadUrls();
+    }
+
+    private void initAdapter(ArrayList<String> urls) {
+        adapter = new MyAdapter();
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void loadUrls() {
+        Log.i(TAG, "Loading page: " + currentPage);
+
+        UrlsLoader.load(currentPage, new UrlsLoader.UrlsLoaderListener() {
             @Override
-            public void onLoaded(String[] urls) {
+            public void onLoaded(ArrayList<String> urls) {
                 loadingView.setVisibility(View.GONE);
-                initAdapter(urls);
+                adapter.addData(urls);
             }
         });
     }
 
-    private void initAdapter(String [] urls) {
-        MyAdapter adapter = new MyAdapter(urls);
-        recyclerView.setAdapter(adapter);
+    private void loadNextPage() {
+        currentPage++;
+        loadUrls();
     }
 
     /**
      * Class that takes care of data and its representation inside RecyclerView
      */
-    public static class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
+    public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         private final String TAG = "MyAdapter";
 
-        private String[] dataset;
+        private ArrayList<String> dataset = new ArrayList<String>();
         private HashMap<String, Bitmap> bitmapCache = new HashMap<>();
 
-        public MyAdapter(String[] myDataset) {
-            dataset = myDataset;
+        public void addData(ArrayList<String> newDataset) {
+            dataset.addAll(newDataset);
+            notifyDataSetChanged();
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder {
@@ -97,7 +116,7 @@ public class MainActivityFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            String url = dataset[position];
+            String url = dataset.get(position);
 
             // Update url not to set ImageView into already re-used ViewHolder
             holder.url = url;
@@ -109,11 +128,16 @@ public class MainActivityFragment extends Fragment {
                 holder.image.setImageResource(R.drawable.loading);
                 scheduleDownload(holder);
             }
+
+            // Scheduling to load the next page
+            if(position == dataset.size() - 1) {
+                loadNextPage();
+            }
         }
 
         @Override
         public int getItemCount() {
-            return dataset == null ? 0 : dataset.length;
+            return dataset.size();
         }
 
         private void scheduleDownload(ViewHolder holder) {
