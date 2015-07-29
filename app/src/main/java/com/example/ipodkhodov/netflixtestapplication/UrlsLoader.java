@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class that takes care of loading pages of urls
@@ -24,8 +25,13 @@ public class UrlsLoader {
     private static final String baseUrl = "http://api.rottentomatoes.com/api/public/v1.0/movies.json?apikey=9htuhtcb4ymusd73d4z6jxcj&q=the&page_limit=%d&page=%d";
     private UrlsLoaderListener listener;
 
+    public static class MovieData {
+        public String url;
+        public String description;
+    }
+
     public interface UrlsLoaderListener {
-        public void onLoaded(ArrayList<String> urls);
+        public void onLoaded(List<MovieData> urls);
     }
 
     public static void load(int pageNumber, UrlsLoaderListener listener) {
@@ -47,16 +53,23 @@ public class UrlsLoader {
             protected void onPostExecute(JSONObject json) {
                 super.onPostExecute(json);
 
-                ArrayList<String> arrayList = new ArrayList<String>();
+                List<MovieData> arrayList = new ArrayList<>();
 
                 // Parse json
                 try {
+                    if (json == null) {
+                        Log.e(TAG, "Got null JSON!");
+                        return;
+                    }
+
                     JSONArray array = json.getJSONArray("movies");
                     for (int i = 0; i < array.length(); ++i) {
                         JSONObject movie = array.getJSONObject(i);
                         JSONObject poster = movie.getJSONObject("posters");
-                        String url = poster.getString("thumbnail");
-                        arrayList.add(url);
+                        MovieData data = new MovieData();
+                        data.url = poster.getString("thumbnail");
+                        data.description = String.format("%s - %s (%d), Rating: %s\nRuntime: %d", movie.getString("id"), movie.getString("title"), movie.getInt("year"), movie.getString("mpaa_rating"), movie.getInt("runtime"));
+                        arrayList.add(data);
                     }
                 } catch (JSONException ex) {
                     Log.e(TAG, "Got exception trying to parse JSON: " + ex);

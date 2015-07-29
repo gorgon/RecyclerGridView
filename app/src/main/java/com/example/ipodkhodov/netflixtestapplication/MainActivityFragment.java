@@ -1,9 +1,10 @@
 package com.example.ipodkhodov.netflixtestapplication;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -14,10 +15,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -67,9 +68,9 @@ public class MainActivityFragment extends Fragment {
 
         UrlsLoader.load(currentPage, new UrlsLoader.UrlsLoaderListener() {
             @Override
-            public void onLoaded(ArrayList<String> urls) {
+            public void onLoaded(List<UrlsLoader.MovieData> data) {
                 loadingView.setVisibility(View.GONE);
-                adapter.addData(urls);
+                adapter.addData(data);
             }
         });
     }
@@ -85,38 +86,53 @@ public class MainActivityFragment extends Fragment {
     public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
         private final String TAG = "MyAdapter";
 
-        private ArrayList<String> dataset = new ArrayList<String>();
-        private HashMap<String, Bitmap> bitmapCache = new HashMap<>();
+        private List<UrlsLoader.MovieData> dataset = new ArrayList<>();
+        private Map<String, Bitmap> bitmapCache = new HashMap<>();
 
-        public void addData(ArrayList<String> newDataset) {
+        public void addData(List<UrlsLoader.MovieData> newDataset) {
             dataset.addAll(newDataset);
             notifyDataSetChanged();
+        }
+
+        public void onViewHolderClick(View view, int position) {
+            String description = dataset.get(position).description;
+            Bitmap bmp = bitmapCache.get(dataset.get(position).url);
+            Intent intent = DetailsFragment.createStartIntent(getActivity(), bmp, description);
+
+            // Lollipop hero transition
+            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), view, "boxArtTransition");
+            getActivity().startActivity(intent, options.toBundle());
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder {
             public ImageView image;
             public String url; // Keep track of current url (not to set obsolete image into new position)
 
-            public ViewHolder(ImageView v) {
+            public ViewHolder(View v) {
                 super(v);
-                image = v;
+                image = (ImageView) v.findViewById(R.id.thumbnail);;
+                image.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        int position = ViewHolder.this.getAdapterPosition();
+                        onViewHolderClick(view, position);
+                    }
+                });
             }
         }
 
         @Override
         public MyAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
                                                        int viewType) {
-            // create a new view
+            // create a new view - got from https://developer.android.com/training/material/lists-cards.html
             ViewGroup v = (ViewGroup)LayoutInflater.from(parent.getContext()).inflate(R.layout.thumbnail_view, parent, false);
-            ImageView image = (ImageView) v.findViewById(R.id.thumbnail);
-            v.removeView(image);
-            ViewHolder vh = new ViewHolder(image);
+            ViewHolder vh = new ViewHolder(v);
             return vh;
         }
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            String url = dataset.get(position);
+            String url = dataset.get(position).url;
 
             // Update url not to set ImageView into already re-used ViewHolder
             holder.url = url;
@@ -130,7 +146,7 @@ public class MainActivityFragment extends Fragment {
             }
 
             // Scheduling to load the next page
-            if(position == dataset.size() - 1) {
+            if (position == dataset.size() - 1) {
                 loadNextPage();
             }
         }
@@ -150,7 +166,7 @@ public class MainActivityFragment extends Fragment {
                     viewHolder = holder[0];
                     initialUrl = viewHolder.url;
 
-                    return loadImage(initialUrl);
+                    return NetworkUtils.loadImage(initialUrl);
                 }
 
                 @Override
@@ -169,19 +185,6 @@ public class MainActivityFragment extends Fragment {
                 }
             };
             asyncTask.execute(holder);
-        }
-
-        private Bitmap loadImage(String url) {
-            Bitmap bitmap = null;
-            InputStream in = null;
-            try {
-                in = NetworkUtils.OpenHttpConnection(url);
-                bitmap = BitmapFactory.decodeStream(in);
-                in.close();
-            } catch (IOException ex) {
-                Log.i(TAG, "loadImage got an exception: " + ex);
-            }
-            return bitmap;
         }
     }
 }

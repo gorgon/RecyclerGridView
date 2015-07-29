@@ -1,5 +1,7 @@
 package com.example.ipodkhodov.netflixtestapplication;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import java.io.IOException;
@@ -31,5 +33,18 @@ public class NetworkUtils {
             Log.e(TAG, "Got exception opening http connection: " + ex);
         }
         return inputStream;
+    }
+
+    public static Bitmap loadImage(String url) {
+        Bitmap bitmap = null;
+        InputStream in = null;
+        try {
+            in = NetworkUtils.OpenHttpConnection(url);
+            bitmap = BitmapFactory.decodeStream(in);
+            in.close();
+        } catch (IOException ex) {
+            Log.i(TAG, "loadImage got an exception: " + ex);
+        }
+        return bitmap;
     }
 }
