@@ -4,6 +4,7 @@ import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
@@ -101,18 +102,21 @@ public class MainActivityFragment extends Fragment {
             Bitmap bmp = bitmapCache.get(dataset.get(position).url);
             Intent intent = DetailsFragment.createStartIntent(getActivity(), bmp, description);
 
-            // Exclusing status and navigation bars from animation
-            View statusBar = getActivity().findViewById(android.R.id.statusBarBackground);
-            View navigationBar = getActivity().findViewById(android.R.id.navigationBarBackground);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                // Exclusing status and navigation bars from animation
+                View statusBar = getActivity().findViewById(android.R.id.statusBarBackground);
+                View navigationBar = getActivity().findViewById(android.R.id.navigationBarBackground);
 
-            List<Pair<View, String>> pairs = new ArrayList<>();
-            pairs.add(Pair.create(statusBar, Window.STATUS_BAR_BACKGROUND_TRANSITION_NAME));
-            pairs.add(Pair.create(navigationBar, Window.NAVIGATION_BAR_BACKGROUND_TRANSITION_NAME));
-            pairs.add(Pair.create(view, "boxArtTransition"));
-            // Lollipop hero transition
-            Bundle options = ActivityOptions.makeSceneTransitionAnimation(getActivity(), pairs.toArray(new Pair[pairs.size()])).toBundle();
-            getActivity().startActivity(intent, options);
-            getActivity().overridePendingTransition(0, 0);
+                List<Pair<View, String>> pairs = new ArrayList<>();
+                pairs.add(Pair.create(statusBar, Window.STATUS_BAR_BACKGROUND_TRANSITION_NAME));
+                pairs.add(Pair.create(navigationBar, Window.NAVIGATION_BAR_BACKGROUND_TRANSITION_NAME));
+                pairs.add(Pair.create(view, "boxArtTransition"));
+                // Lollipop hero transition
+                Bundle options = ActivityOptions.makeSceneTransitionAnimation(getActivity(), pairs.toArray(new Pair[pairs.size()])).toBundle();
+                getActivity().startActivity(intent, options);
+            } else {
+                getActivity().startActivity(intent);
+            }
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder {
