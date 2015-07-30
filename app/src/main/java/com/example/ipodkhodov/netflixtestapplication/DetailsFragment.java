@@ -1,5 +1,7 @@
 package com.example.ipodkhodov.netflixtestapplication;
 
+import android.animation.Animator;
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;
@@ -16,8 +18,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -33,8 +34,8 @@ public class DetailsFragment extends Fragment {
     private boolean heroTransionFinished;
     private Bitmap backgroundBitmap;
     private boolean alphaAnimationStarted;
-    private Animation alphaShowAnimation;
-    private Animation alphaFadeAnimation;
+    private ObjectAnimator alphaShowAnimation;
+    private ObjectAnimator alphaFadeAnimation;
 
 
     private static final String BOX_ART_URL_EXTRA = "boxart_url";
@@ -60,12 +61,9 @@ public class DetailsFragment extends Fragment {
 
                     // If we are now going out from the fragment we need to hide background image (e.g. when it is still in process of fading out)
                     if (heroTransionFinished) {
-                        if (alphaFadeAnimation != null) {
-                            alphaFadeAnimation.cancel();
-                        }
-                        if (alphaShowAnimation != null) {
-                            alphaShowAnimation.cancel();
-                        }
+                        alphaFadeAnimation = ObjectAnimator.ofFloat(boxArt, "alpha", 1.0f, 0.0f);
+                        alphaFadeAnimation.setDuration(300);
+                        alphaFadeAnimation.start();
                         background.setVisibility(View.GONE);
                     }
                 }
@@ -128,11 +126,13 @@ public class DetailsFragment extends Fragment {
             protected Bitmap doInBackground(String... urls) {
                 initialUrl = urls[0];
 
+                Bitmap image = NetworkUtils.loadImage(initialUrl);
+
                 if (getActivity() == null || getActivity().isFinishing()) {
                     return null;
                 }
 
-                return blurRenderScript(NetworkUtils.loadImage(initialUrl));
+                return blurRenderScript(image);
             }
 
             @Override
@@ -148,29 +148,45 @@ public class DetailsFragment extends Fragment {
     private void tryUpdateBackground() {
         if (!alphaAnimationStarted && backgroundBitmap != null && heroTransionFinished && getActivity() != null && !getActivity().isFinishing()) {
             background.setImageBitmap(backgroundBitmap);
-            alphaShowAnimation = new AlphaAnimation(0.0f, 1.0f);
+            alphaShowAnimation = ObjectAnimator.ofFloat(background, "alpha", 0.0f, 1.0f);
             alphaShowAnimation.setDuration(1000);
-            background.startAnimation(alphaShowAnimation);
-            alphaFadeAnimation = new AlphaAnimation(1.0f, 0.0f);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                alphaShowAnimation.setAutoCancel(true);
+            }
+            alphaShowAnimation.setInterpolator(new LinearInterpolator());
+            alphaShowAnimation.start();
+            alphaFadeAnimation = ObjectAnimator.ofFloat(boxArt, "alpha", 1.0f, 0.0f);
             alphaFadeAnimation.setDuration(1000);
-            alphaFadeAnimation.setAnimationListener(new Animation.AnimationListener() {
+            alphaFadeAnimation.setInterpolator(new LinearInterpolator());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+                alphaFadeAnimation.setAutoCancel(true);
+            }
+            alphaFadeAnimation.addListener(new Animator.AnimatorListener() {
                 @Override
-                public void onAnimationStart(Animation animation) {
+                public void onAnimationStart(Animator animator) {
+
                 }
 
                 @Override
-                public void onAnimationEnd(Animation animation) {
+                public void onAnimationEnd(Animator animator) {
                     // Swap bitmaps to perform out hero animation when hiding fragment back
                     boxArt.setImageBitmap(backgroundBitmap);
+                    boxArt.setAlpha(1.0f);
                     background.setVisibility(View.GONE);
                     backgroundBitmap = null;
                 }
 
                 @Override
-                public void onAnimationRepeat(Animation animation) {
+                public void onAnimationCancel(Animator animator) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animator) {
+
                 }
             });
-            boxArt.startAnimation(alphaFadeAnimation);
+            alphaFadeAnimation.start();
             alphaAnimationStarted = true;
         }
     }
