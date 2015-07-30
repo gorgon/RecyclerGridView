@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
@@ -32,6 +33,7 @@ public class DetailsFragment extends Fragment {
     private ImageView background;
     private TextView description;
     private boolean heroTransionFinished;
+    private Bitmap inputBitmap;
     private Bitmap backgroundBitmap;
     private boolean alphaAnimationStarted;
     private ObjectAnimator alphaShowAnimation;
@@ -96,9 +98,9 @@ public class DetailsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View fragmentView = inflater.inflate(R.layout.fragment_details, container, false);
         findViews(fragmentView);
-        Bitmap bmp = (Bitmap)getActivity().getIntent().getParcelableExtra(BOX_ART_URL_EXTRA);
+        inputBitmap = (Bitmap)getActivity().getIntent().getParcelableExtra(BOX_ART_URL_EXTRA);
         String desc = getActivity().getIntent().getStringExtra(DESCRIPTION_EXTRA);
-        initViews(bmp, desc);
+        initViews(desc);
         return fragmentView;
     }
 
@@ -108,8 +110,8 @@ public class DetailsFragment extends Fragment {
         description = (TextView)fragmentView.findViewById(R.id.description);
     }
 
-    private void initViews(Bitmap bitmap, String desc) {
-        boxArt.setImageBitmap(bitmap);
+    private void initViews(String desc) {
+        boxArt.setImageBitmap(inputBitmap);
 
         // An example of downloading a large image during hero transition animation
         String url = "http://www.freedvdcover.com/wp-content/uploads/The_Notebook_R4-front-www.GetCovers.net_.jpg"; // 3206x2135 px
@@ -132,7 +134,8 @@ public class DetailsFragment extends Fragment {
                     return null;
                 }
 
-                return blurRenderScript(image);
+                blurRenderScript(image);
+                return blurRenderScript_Juan(image);
             }
 
             @Override
@@ -194,6 +197,7 @@ public class DetailsFragment extends Fragment {
     private Bitmap blurRenderScript(Bitmap smallBitmap) {
         Log.i(TAG, "Creating blur bitmap started..");
         long startTime = System.currentTimeMillis();
+
         Bitmap output = Bitmap.createBitmap(smallBitmap.getWidth(), smallBitmap.getHeight(), Bitmap.Config.ARGB_8888);
         RenderScript rs = RenderScript.create(getActivity());
         ScriptIntrinsicBlur script = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs));
@@ -204,10 +208,81 @@ public class DetailsFragment extends Fragment {
         script.forEach(outAlloc);
         outAlloc.copyTo(output);
         rs.destroy();
-        smallBitmap.recycle();
+        //smallBitmap.recycle();
 
         long timeSpent = System.currentTimeMillis() - startTime;
         Log.i(TAG, "Finished creating blur bitmap. Time spend: " + timeSpent + "ms");
         return output;
+    }
+
+    private Bitmap blurRenderScript_Juan(Bitmap smallBitmap) {
+        Log.i(TAG, "Creating blur Juan bitmap started..");
+        long startTime = System.currentTimeMillis();
+
+        RenderScript rsScript = getRenderScript(getActivity());
+
+        Bitmap output = smallBitmap;
+        if (rsScript == null) {
+            return smallBitmap;
+        }
+        try {
+            // If the bitmap's internal config is in one of the public formats,
+            // getConfig() will return that config, otherwise it will return null.
+            Bitmap.Config config = smallBitmap.getConfig();
+            int usage = Allocation.USAGE_SCRIPT;
+            if (config == null) {
+                // If the config is null, we use the recommended ARGB 8888 config
+                config = Bitmap.Config.ARGB_8888;
+            } else {
+                // if the config IS in one of the public formats, then we can use
+                // Allocation.USAGE_SHARED causing the bitmap copy to be just a
+                // synchronization rather than a full copy.
+                usage = usage | Allocation.USAGE_SHARED;
+            }
+
+            if (smallBitmap.getWidth() % 4 != 0) {
+                // Blurring images that aren't a mulitple of 4 pixels wide results in artefacts
+                // https://plus.google.com/+RomanNurik/posts/TLkVQC3M6jW
+                Bitmap cropped = Bitmap.createBitmap(smallBitmap, 0, 0, smallBitmap.getWidth() - smallBitmap.getWidth() % 4, smallBitmap.getHeight());
+                smallBitmap.recycle();
+                smallBitmap = cropped;
+            }
+
+            output = smallBitmap.copy(config, true);
+            Allocation alloc = Allocation.createFromBitmap(rsScript, smallBitmap, Allocation.MipmapControl.MIPMAP_NONE, usage);
+
+            Allocation outAlloc = Allocation.createTyped(rsScript, alloc.getType());
+            // ScriptIntrinsicBlur is the one that does all the magic
+            ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(rsScript, Element.U8_4(rsScript));
+
+            // The radius needs to be between 1 and 25
+            blur.setRadius(25);
+            blur.setInput(alloc);
+            blur.forEach(outAlloc);
+            outAlloc.copyTo(output);
+
+            // We need to do some cleanup before we exit to avoid memory issues
+            rsScript.destroy();
+            //smallBitmap.recycle();
+        } catch (Exception ex) {
+            Log.e(TAG, "Got exception!");
+        }
+
+        long timeSpent = System.currentTimeMillis() - startTime;
+        Log.i(TAG, "Finished creating blur Juan bitmap. Time spend: " + timeSpent + "ms");
+        return output;
+    }
+
+    private static RenderScript getRenderScript(Context context) {
+        RenderScript rsScript = null;
+        try {
+            // This step can fail on some phones, so instead of crashing we need to just
+            // avoid using RenderScript
+            rsScript = RenderScript.create(context);
+        } catch (Exception e) {
+            // Do logging
+            Log.e(TAG, "Got exception inside getRenderScript: " + e);
+        }
+        return rsScript;
     }
 }
