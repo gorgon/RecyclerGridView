@@ -7,6 +7,9 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,6 +38,7 @@ public class DetailsFragment extends Fragment {
     private boolean heroTransionFinished;
     private Bitmap inputBitmap;
     private Bitmap backgroundBitmap;
+    private Bitmap blurredBackgroundBitmap;
     private boolean alphaAnimationStarted;
     private ObjectAnimator alphaShowAnimation;
     private ObjectAnimator alphaFadeAnimation;
@@ -134,14 +138,19 @@ public class DetailsFragment extends Fragment {
                     return null;
                 }
 
-                blurRenderScript(image);
-                return blurRenderScript_Juan(image);
+                backgroundBitmap = image;
+                blurredBackgroundBitmap = blurRenderScript(image);
+                return image;
             }
 
             @Override
             protected void onPostExecute(Bitmap bitmap) {
                 super.onPostExecute(bitmap);
-                backgroundBitmap = bitmap;
+
+                if (getActivity() == null || getActivity().isFinishing()) {
+                    return;
+                }
+
                 tryUpdateBackground();
             }
         };
@@ -149,7 +158,7 @@ public class DetailsFragment extends Fragment {
     }
 
     private void tryUpdateBackground() {
-        if (!alphaAnimationStarted && backgroundBitmap != null && heroTransionFinished && getActivity() != null && !getActivity().isFinishing()) {
+        if (!alphaAnimationStarted && backgroundBitmap != null && getActivity() != null && !getActivity().isFinishing()) {
             background.setImageBitmap(backgroundBitmap);
             alphaShowAnimation = ObjectAnimator.ofFloat(background, "alpha", 0.0f, 1.0f);
             alphaShowAnimation.setDuration(1000);
@@ -173,7 +182,13 @@ public class DetailsFragment extends Fragment {
                 @Override
                 public void onAnimationEnd(Animator animator) {
                     // Swap bitmaps to perform out hero animation when hiding fragment back
-                    boxArt.setImageBitmap(backgroundBitmap);
+                    Drawable[] layers = new Drawable[2];
+                    layers[0] = new BitmapDrawable(getActivity().getResources(), backgroundBitmap);
+                    layers[1] = new BitmapDrawable(getActivity().getResources(), blurredBackgroundBitmap);
+                    // Converting into Blur Animation - use blur with cross-fading (TransitionDrawable). Details: http://stackoverflow.com/a/24863507/1390874
+                    TransitionDrawable td = new TransitionDrawable(layers);
+                    td.startTransition(1000);
+                    boxArt.setImageDrawable(td);
                     boxArt.setAlpha(1.0f);
                     background.setVisibility(View.GONE);
                     backgroundBitmap = null;
@@ -198,27 +213,6 @@ public class DetailsFragment extends Fragment {
         Log.i(TAG, "Creating blur bitmap started..");
         long startTime = System.currentTimeMillis();
 
-        Bitmap output = Bitmap.createBitmap(smallBitmap.getWidth(), smallBitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        RenderScript rs = RenderScript.create(getActivity());
-        ScriptIntrinsicBlur script = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs));
-        Allocation inAlloc = Allocation.createFromBitmap(rs, smallBitmap, Allocation.MipmapControl.MIPMAP_NONE, Allocation.USAGE_GRAPHICS_TEXTURE);
-        Allocation outAlloc = Allocation.createFromBitmap(rs, output);
-        script.setRadius(25); // Maximum blur radius
-        script.setInput(inAlloc);
-        script.forEach(outAlloc);
-        outAlloc.copyTo(output);
-        rs.destroy();
-        //smallBitmap.recycle();
-
-        long timeSpent = System.currentTimeMillis() - startTime;
-        Log.i(TAG, "Finished creating blur bitmap. Time spend: " + timeSpent + "ms");
-        return output;
-    }
-
-    private Bitmap blurRenderScript_Juan(Bitmap smallBitmap) {
-        Log.i(TAG, "Creating blur Juan bitmap started..");
-        long startTime = System.currentTimeMillis();
-
         RenderScript rsScript = getRenderScript(getActivity());
 
         Bitmap output = smallBitmap;
@@ -240,11 +234,12 @@ public class DetailsFragment extends Fragment {
                 usage = usage | Allocation.USAGE_SHARED;
             }
 
+            // This block takes more then 20% of time - does it really worth it (seems that everything works ok without it)...
             if (smallBitmap.getWidth() % 4 != 0) {
                 // Blurring images that aren't a mulitple of 4 pixels wide results in artefacts
                 // https://plus.google.com/+RomanNurik/posts/TLkVQC3M6jW
                 Bitmap cropped = Bitmap.createBitmap(smallBitmap, 0, 0, smallBitmap.getWidth() - smallBitmap.getWidth() % 4, smallBitmap.getHeight());
-                smallBitmap.recycle();
+                //smallBitmap.recycle();
                 smallBitmap = cropped;
             }
 
@@ -269,7 +264,7 @@ public class DetailsFragment extends Fragment {
         }
 
         long timeSpent = System.currentTimeMillis() - startTime;
-        Log.i(TAG, "Finished creating blur Juan bitmap. Time spend: " + timeSpent + "ms");
+        Log.i(TAG, "Finished creating blur bitmap. Time spend: " + timeSpent + "ms");
         return output;
     }
 

@@ -10,7 +10,7 @@
         android:id="@+id/background"
         android:layout_alignParentTop="true"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="@dimen/details_image_width"
         android:layout_margin="5dp"
         android:scaleType="fitCenter"/>
 
@@ -18,7 +18,7 @@
         android:id="@+id/boxart"
         android:layout_centerHorizontal="true"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="@dimen/details_image_width"
         android:layout_margin="5dp"
         android:scaleType="fitCenter"
         android:transitionName="boxArtTransition"/>
@@ -32,7 +32,7 @@
         android:layout_alignParentBottom="true"
         android:gravity="center_horizontal"
         android:paddingTop="@dimen/activity_horizontal_margin"
-        android:paddingBottom="70dp"
+        android:paddingBottom="@dimen/details_bottom_padding"
         android:textColor="@android:color/white"
         android:background="@android:color/black"
         android:text="@string/loading"/>
