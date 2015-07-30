@@ -1,18 +1,20 @@
 package com.example.ipodkhodov.netflixtestapplication;
 
+import android.app.ActivityOptions;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageView;
 
 import java.util.ArrayList;
@@ -99,9 +101,18 @@ public class MainActivityFragment extends Fragment {
             Bitmap bmp = bitmapCache.get(dataset.get(position).url);
             Intent intent = DetailsFragment.createStartIntent(getActivity(), bmp, description);
 
+            // Exclusing status and navigation bars from animation
+            View statusBar = getActivity().findViewById(android.R.id.statusBarBackground);
+            View navigationBar = getActivity().findViewById(android.R.id.navigationBarBackground);
+
+            List<Pair<View, String>> pairs = new ArrayList<>();
+            pairs.add(Pair.create(statusBar, Window.STATUS_BAR_BACKGROUND_TRANSITION_NAME));
+            pairs.add(Pair.create(navigationBar, Window.NAVIGATION_BAR_BACKGROUND_TRANSITION_NAME));
+            pairs.add(Pair.create(view, "boxArtTransition"));
             // Lollipop hero transition
-            ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), view, "boxArtTransition");
-            getActivity().startActivity(intent, options.toBundle());
+            Bundle options = ActivityOptions.makeSceneTransitionAnimation(getActivity(), pairs.toArray(new Pair[pairs.size()])).toBundle();
+            getActivity().startActivity(intent, options);
+            getActivity().overridePendingTransition(0, 0);
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder {

@@ -5,4 +5,10 @@
         <item name="android:windowContentTransitions" tools:targetApi="21">true</item>
     </style>
 
+    <!-- Details activity theme. -->
+    <style name="DetailsTheme" parent="AppTheme">
+        <item name="android:windowEnterTransition" tools:targetApi="21">@android:transition/slide_bottom</item>
+        <item name="android:windowExitTransition" tools:targetApi="21">@android:transition/slide_top</item>
+    </style>
+
 </resources>

@@ -30,7 +30,6 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
-        android:visibility="invisible"
         android:paddingTop="@dimen/activity_horizontal_margin"
         android:paddingBottom="40dp"
         android:textColor="@android:color/white"
