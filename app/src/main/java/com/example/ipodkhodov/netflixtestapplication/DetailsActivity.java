@@ -1,7 +1,11 @@
 package com.example.ipodkhodov.netflixtestapplication;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.transition.Slide;
+import android.transition.Transition;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.Window;
@@ -24,5 +28,17 @@ public class DetailsActivity extends FragmentActivity {
                 return true;
             }
         });
+
+        // Excluding status and navigation bars from animation
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Transition top = new Slide(Gravity.TOP);
+            top.excludeTarget(android.R.id.statusBarBackground, true);
+            top.excludeTarget(android.R.id.navigationBarBackground, true);
+            getWindow().setExitTransition(top);
+            Transition bottom = new Slide(Gravity.BOTTOM);
+            bottom.excludeTarget(android.R.id.statusBarBackground, true);
+            bottom.excludeTarget(android.R.id.navigationBarBackground, true);
+            getWindow().setEnterTransition(bottom);
+        }
     }
 }

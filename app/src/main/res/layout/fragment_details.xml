@@ -30,8 +30,9 @@
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"
+        android:gravity="center_horizontal"
         android:paddingTop="@dimen/activity_horizontal_margin"
-        android:paddingBottom="40dp"
+        android:paddingBottom="70dp"
         android:textColor="@android:color/white"
         android:background="@android:color/black"
         android:text="@string/loading"/>

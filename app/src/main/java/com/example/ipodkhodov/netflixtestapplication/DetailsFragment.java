@@ -33,6 +33,8 @@ public class DetailsFragment extends Fragment {
     private boolean heroTransionFinished;
     private Bitmap backgroundBitmap;
     private boolean alphaAnimationStarted;
+    private Animation alphaShowAnimation;
+    private Animation alphaFadeAnimation;
 
 
     private static final String BOX_ART_URL_EXTRA = "boxart_url";
@@ -55,6 +57,17 @@ public class DetailsFragment extends Fragment {
                 @Override
                 public void onTransitionStart(Transition transition) {
                     Log.d(TAG, "ActivityB.onTransitionStart");
+
+                    // If we are now going out from the fragment we need to hide background image (e.g. when it is still in process of fading out)
+                    if (heroTransionFinished) {
+                        if (alphaFadeAnimation != null) {
+                            alphaFadeAnimation.cancel();
+                        }
+                        if (alphaShowAnimation != null) {
+                            alphaShowAnimation.cancel();
+                        }
+                        background.setVisibility(View.GONE);
+                    }
                 }
 
                 @Override
@@ -135,10 +148,10 @@ public class DetailsFragment extends Fragment {
     private void tryUpdateBackground() {
         if (!alphaAnimationStarted && backgroundBitmap != null && heroTransionFinished && getActivity() != null && !getActivity().isFinishing()) {
             background.setImageBitmap(backgroundBitmap);
-            AlphaAnimation alphaShowAnimation = new AlphaAnimation(0.0f, 1.0f);
+            alphaShowAnimation = new AlphaAnimation(0.0f, 1.0f);
             alphaShowAnimation.setDuration(1000);
             background.startAnimation(alphaShowAnimation);
-            AlphaAnimation alphaFadeAnimation = new AlphaAnimation(1.0f, 0.0f);
+            alphaFadeAnimation = new AlphaAnimation(1.0f, 0.0f);
             alphaFadeAnimation.setDuration(1000);
             alphaFadeAnimation.setAnimationListener(new Animation.AnimationListener() {
                 @Override
