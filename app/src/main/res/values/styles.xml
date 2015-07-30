@@ -1,9 +1,14 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="android:windowContentTransitions">true</item>
+        <item name="android:windowContentTransitions" tools:targetApi="21">true</item>
+    </style>
+
+    <!-- Details activity theme. -->
+    <style name="DetailsTheme" parent="AppTheme">
+        <item name="android:windowEnterTransition" tools:targetApi="21">@android:transition/slide_bottom</item>
+        <item name="android:windowExitTransition" tools:targetApi="21">@android:transition/slide_top</item>
     </style>
 
 </resources>

@@ -17,18 +17,11 @@
         android:layout_margin="5dp"
         android:scaleType="fitCenter"/>
 
-    <View
-        android:id="@+id/center_view"
-        android:layout_width="1dp"
-        android:layout_height="150dp"
-        android:layout_centerInParent="true" />
-
     <ImageView
         android:id="@+id/boxart"
-        android:layout_above="@id/center_view"
         android:layout_centerHorizontal="true"
-        android:layout_width="@dimen/image_width"
-        android:layout_height="@dimen/image_width"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
         android:layout_margin="5dp"
         android:scaleType="fitCenter"
         android:transitionName="boxArtTransition"/>

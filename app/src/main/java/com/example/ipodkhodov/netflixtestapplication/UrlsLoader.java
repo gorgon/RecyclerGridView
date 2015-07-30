@@ -68,7 +68,7 @@ public class UrlsLoader {
                         JSONObject poster = movie.getJSONObject("posters");
                         MovieData data = new MovieData();
                         data.url = poster.getString("thumbnail");
-                        data.description = String.format("%s - %s (%d), Rating: %s\nRuntime: %d", movie.getString("id"), movie.getString("title"), movie.getInt("year"), movie.getString("mpaa_rating"), movie.getInt("runtime"));
+                        data.description = String.format("%s - %s (%d), Rating: %s\nRuntime: %s", movie.getString("id"), movie.getString("title"), movie.getInt("year"), movie.getString("mpaa_rating"), movie.getString("runtime"));
                         arrayList.add(data);
                     }
                 } catch (JSONException ex) {

@@ -7,16 +7,17 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicBlur;
+import android.support.v8.renderscript.Allocation;
+import android.support.v8.renderscript.Element;
+import android.support.v8.renderscript.RenderScript;
+import android.support.v8.renderscript.ScriptIntrinsicBlur;
 import android.transition.Transition;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -31,6 +32,7 @@ public class DetailsFragment extends Fragment {
     private TextView description;
     private boolean heroTransionFinished;
     private Bitmap backgroundBitmap;
+    private boolean alphaAnimationStarted;
 
 
     private static final String BOX_ART_URL_EXTRA = "boxart_url";
@@ -54,18 +56,22 @@ public class DetailsFragment extends Fragment {
                 public void onTransitionStart(Transition transition) {
                     Log.d(TAG, "ActivityB.onTransitionStart");
                 }
+
                 @Override
                 public void onTransitionEnd(Transition transition) {
                     Log.d(TAG, "ActivityB.onTransitionEnd");
                     heroTransionFinished = true;
                     tryUpdateBackground();
                 }
+
                 @Override
                 public void onTransitionCancel(Transition transition) {
                 }
+
                 @Override
                 public void onTransitionPause(Transition transition) {
                 }
+
                 @Override
                 public void onTransitionResume(Transition transition) {
                 }
@@ -108,7 +114,7 @@ public class DetailsFragment extends Fragment {
             @Override
             protected Bitmap doInBackground(String... urls) {
                 initialUrl = urls[0];
-                return NetworkUtils.loadImage(initialUrl);
+                return blurRenderScript(NetworkUtils.loadImage(initialUrl));
             }
 
             @Override
@@ -122,12 +128,32 @@ public class DetailsFragment extends Fragment {
     }
 
     private void tryUpdateBackground() {
-        if (backgroundBitmap != null && heroTransionFinished && getActivity() != null && !getActivity().isFinishing()) {
-            background.setImageBitmap(blurRenderScript(backgroundBitmap));
-            AlphaAnimation alphaAnimation = new AlphaAnimation(0.0f, 1.0f);
-            alphaAnimation.setDuration(1000);
-            background.startAnimation(alphaAnimation);
-            backgroundBitmap = null;
+        if (!alphaAnimationStarted && backgroundBitmap != null && heroTransionFinished && getActivity() != null && !getActivity().isFinishing()) {
+            background.setImageBitmap(backgroundBitmap);
+            AlphaAnimation alphaShowAnimation = new AlphaAnimation(0.0f, 1.0f);
+            alphaShowAnimation.setDuration(1000);
+            background.startAnimation(alphaShowAnimation);
+            AlphaAnimation alphaFadeAnimation = new AlphaAnimation(1.0f, 0.0f);
+            alphaFadeAnimation.setDuration(1000);
+            alphaFadeAnimation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    // Swap bitmaps to perform hero animation when hiding fragment
+                    boxArt.setImageBitmap(backgroundBitmap);
+                    background.setVisibility(View.GONE);
+                    backgroundBitmap = null;
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+            });
+            boxArt.startAnimation(alphaFadeAnimation);
+            alphaAnimationStarted = true;
         }
     }
 
