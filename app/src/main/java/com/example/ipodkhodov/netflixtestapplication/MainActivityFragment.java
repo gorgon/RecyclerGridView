@@ -102,7 +102,6 @@ public class MainActivityFragment extends Fragment {
             // Lollipop hero transition
             ActivityOptionsCompat options = ActivityOptionsCompat.makeSceneTransitionAnimation(getActivity(), view, "boxArtTransition");
             getActivity().startActivity(intent, options.toBundle());
-            //getActivity().overridePendingTransition(R.anim.slide_from_bottom, R.anim.slide_out_top);
         }
 
         public class ViewHolder extends RecyclerView.ViewHolder {

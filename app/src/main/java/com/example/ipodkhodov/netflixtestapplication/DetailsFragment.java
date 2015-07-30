@@ -12,12 +12,14 @@ import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.ScriptIntrinsicBlur;
 import android.transition.Transition;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -55,6 +57,13 @@ public class DetailsFragment extends Fragment {
                 @Override
                 public void onTransitionStart(Transition transition) {
                     Log.d(TAG, "ActivityB.onTransitionStart");
+                    // If we already showed description it means now it is exit animation and we need to move it back
+                    if (alphaAnimationStarted) {
+                        animateDescription(false);
+                    } else {
+                        // Showing movie details
+                        animateDescription(true);
+                    }
                 }
 
                 @Override
@@ -114,6 +123,11 @@ public class DetailsFragment extends Fragment {
             @Override
             protected Bitmap doInBackground(String... urls) {
                 initialUrl = urls[0];
+
+                if (getActivity() == null || getActivity().isFinishing()) {
+                    return null;
+                }
+
                 return blurRenderScript(NetworkUtils.loadImage(initialUrl));
             }
 
@@ -142,7 +156,7 @@ public class DetailsFragment extends Fragment {
 
                 @Override
                 public void onAnimationEnd(Animation animation) {
-                    // Swap bitmaps to perform hero animation when hiding fragment
+                    // Swap bitmaps to perform out hero animation when hiding fragment back
                     boxArt.setImageBitmap(backgroundBitmap);
                     background.setVisibility(View.GONE);
                     backgroundBitmap = null;
@@ -154,6 +168,20 @@ public class DetailsFragment extends Fragment {
             });
             boxArt.startAnimation(alphaFadeAnimation);
             alphaAnimationStarted = true;
+        }
+    }
+
+    private void animateDescription(boolean bShow) {
+        DisplayMetrics dm = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
+
+        if(bShow) {
+            description.setTranslationY(description.getHeight() == 0 ? 100 : description.getHeight());
+            description.animate().translationY(0).setInterpolator(new DecelerateInterpolator()).setDuration(500);
+            description.setVisibility(View.VISIBLE);
+        } else {
+            //description.animate().translationY(dm.heightPixels);
+            description.setVisibility(View.GONE);
         }
     }
 
