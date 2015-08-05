@@ -1,4 +1,4 @@
-package com.example.ipodkhodov.netflixtestapplication;
+package com.example.ipodkhodov.recyclertestapplication;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
@@ -74,6 +74,15 @@ public class MainActivityFragment extends Fragment {
             public void onLoaded(List<UrlsLoader.MovieData> data) {
                 loadingView.setVisibility(View.GONE);
                 adapter.addData(data);
+//                MainActivityFragment.this.getView().invalidate();
+//                MainActivityFragment.this.getView().requestLayout();
+//                adapter.notifyDataSetChanged();
+
+//                getActivity().getSupportFragmentManager()
+//                        .beginTransaction()
+//                        .detach(MainActivityFragment.this)
+//                        .attach(MainActivityFragment.this)
+//                        .commit();
             }
         });
     }

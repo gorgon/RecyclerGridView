@@ -1,4 +1,4 @@
-package com.example.ipodkhodov.netflixtestapplication;
+package com.example.ipodkhodov.recyclertestapplication;
 
 import android.os.AsyncTask;
 import android.util.Log;

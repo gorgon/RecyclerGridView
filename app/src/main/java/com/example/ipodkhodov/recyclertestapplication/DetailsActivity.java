@@ -1,4 +1,4 @@
-package com.example.ipodkhodov.netflixtestapplication;
+package com.example.ipodkhodov.recyclertestapplication;
 
 import android.os.Build;
 import android.os.Bundle;

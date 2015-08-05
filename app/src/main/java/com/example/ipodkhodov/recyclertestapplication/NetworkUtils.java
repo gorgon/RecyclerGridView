@@ -1,4 +1,4 @@
-package com.example.ipodkhodov.netflixtestapplication;
+package com.example.ipodkhodov.recyclertestapplication;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -44,6 +44,8 @@ public class NetworkUtils {
             in.close();
         } catch (IOException ex) {
             Log.i(TAG, "loadImage got an exception: " + ex);
+        } catch (Exception ex) {
+            Log.i(TAG, "loadImage got an exception 2: " + ex);
         }
         return bitmap;
     }
