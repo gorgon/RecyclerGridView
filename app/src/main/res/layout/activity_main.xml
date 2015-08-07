@@ -21,11 +21,6 @@
                 android:layout_height="wrap_content"
                 tools:layout="@layout/fragment_main"/>
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:src="@drawable/abc_ic_menu_selectall_mtrl_alpha"/>
-
             <fragment
                 android:id="@+id/fragment"
                 android:name="com.example.ipodkhodov.recyclertestapplication.MainActivityFragment"

@@ -70,6 +70,6 @@ public class PaginatedScrollView extends ScrollView {
     private void scrollToBottom() {
         DisplayMetrics dm = new DisplayMetrics();
         ((Activity)getContext()).getWindowManager().getDefaultDisplay().getMetrics(dm);
-        this.smoothScrollTo(0, dm.heightPixels);
+        this.smoothScrollTo(0, dm.heightPixels - 100);
     }
 }
